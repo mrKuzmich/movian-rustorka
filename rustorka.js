@@ -43,12 +43,14 @@
             mainCategoryHeader: /<h3 class="cat_title"><a href=".*?">([\s\S]*?)<\/a><\/h3>([\s\S]*?)<\/table>/g,
             mainSubforum: /<h4 class="forumlink"><a href="\.?\/?viewforum\.php\?f=([\s\S]{0,200}?)">([\s\S]*?)<\/a><\/h4>/g,
             topic: /href="\.?\/?viewtopic\.php\?t=([\d]{0,200}?)" class="[\s\S]*?">([\s\S]*?)<\/a>/g,
-            userCookie: /bb_data/,
             captcha: /<div><img src="(.*?)"[.\w\W]*?<input type="hidden" name="cap_sid" value="(.*?)">[.\w\W]*?<input type="text" name="(.*?)"/g,
             authFail: /<h4 class="warnColor1 tCenter mrg_16">/,
             search: {
                 info: /<a class="genmed"  href="\.\/viewtopic\.php\?t=(\d{1,10})">(.*?)<\/a>[\W\w.]*?<\/u>([\W\w.]*?)<\/td>[\W\w.]*?title="[\s\S]*?"><b>(\d{1,10})<\/b>[\W\w.]*?title="Leechers"><b>(\d{1,10})<\/b>/gm
-            }
+            },
+        },
+        const : {
+            userCookie:'bb_data',
         },
         login: {
             loginFieldName: 'login_username',
@@ -68,7 +70,7 @@
     });
 
     settings.createString("userCookie", "Cookie пользователя", "DONT_TOUCH_THIS", function (v) {
-        service.userCookie = v;
+        service.userCookie = {}; // todo set
     });
 
     config.urls = {
@@ -116,7 +118,7 @@
         }
         else {
             saveUserCookie(doc.headers);
-            if (!(service.userCookie.match(config.regExps.userCookie))) {
+            if (typeof service.userCookie[config.const.userCookie] === 'undefined') {
                 page.redirect(config.prefix + ":logout:false:null:null");
             }
 
@@ -318,7 +320,7 @@
             }
             page.loading = true;
             //проверяем куки, если нет, то нужно перелогиниться или залогиниться, используя сохраненные данные
-            if (!(service.userCookie.match(config.regExps.userCookie))) {
+            if (typeof service.userCookie[config.const.userCookie] === 'undefined') {
                 page.redirect(config.prefix + ":logout:false:" + topicId + ":" + topicTitle);
                 return false;
             }
@@ -389,7 +391,7 @@
                 dummy: ""
             },
             headers: {
-                Cookie: service.userCookie + ' bb_dl=' + dlHref + ';'
+                Cookie: getUserCookies() + ' bb_dl=' + dlHref + ';'
             }
         });
         page.redirect('torrent:browse:data:application/x-bittorrent;base64,' + Duktape.enc('base64', x.bytes));
@@ -429,7 +431,7 @@
                     headers: {
                         'Referer': config.urls.base,
                         'Content-Type': 'application/x-www-form-urlencoded',
-                        'Cookie': ''
+                        'Cookie': getUserCookies()
                     }
                 };
                 if (options.captchaSid) {
@@ -519,8 +521,16 @@
         if (!headers) return false;
         cookie = headers['Set-Cookie'];
         if (cookie) {
-            service.userCookie = cookie.split(';')[0] + ';';
+            variable = cookie.split(';')[0].split('=');
+            service.userCookie[variable[0]] = variable[1];
         }
+    }
+
+    function getUserCookies() {
+        var cookies = '';
+        for (key in service.userCookie)
+            cookies += key + '=' + service.userCookie[key] + ';';
+        return cookies;
     }
 
     function performLogin() {
@@ -665,6 +675,37 @@
         }
 
     });
+
+/*    function traceObject(o, ident) {
+        showtime.trace("TRACE OBJECT:\n");
+        showtime.trace(printObject(o, ident));
+    }
+
+    function printObject(o, indent) {
+        var out = '';
+        if (typeof indent === 'undefined') {
+            indent = 0;
+        }
+        for (var p in o) {
+            if (o.hasOwnProperty(p)) {
+                var val = o[p];
+                out += new Array(4 * indent + 1).join(' ') + p + ': ';
+                if (typeof val === 'object') {
+                    if (val instanceof Date) {
+                        out += 'Date "' + val.toISOString() + '"';
+                    } else {
+                        out += '{\n' + printObject(val, indent + 1) + new Array(4 * indent + 1).join(' ') + '}';
+                    }
+                } else if (typeof val === 'function') {
+
+                } else {
+                    out += '"' + val + '"';
+                }
+                out += ',\n';
+            }
+        }
+        return out;
+    }*/
 
 
 })(this);

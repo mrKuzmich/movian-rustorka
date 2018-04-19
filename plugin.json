@@ -1,10 +1,10 @@
 {
   "description": "Rustorka.com",
   "author": "Wain",
-  "homepage": "http://github.com/Wain-PC",
+  "homepage": "https://github.com/mrKuzmich/movian-rustorka",
   "title": "Rustorka.com",
   "synopsis": "Rustorka.com",
-  "version": "0.2",
+  "version": "0.2.1",
   "file": "rustorka.js",
   "showtimeVersion": "4.9.389",
   "type": "ecmascript",
